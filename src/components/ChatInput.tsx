@@ -37,7 +37,7 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
           type="text"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
+          placeholder="Refine suggestions or add specific requests..."
           style={{
             flex: 1,
             minHeight: '40px',
