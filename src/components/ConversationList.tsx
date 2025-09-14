@@ -22,17 +22,28 @@ export default function ConversationList({ conversations, onSelectConversation }
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
 
+  // Calculate counts for each status
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: conversations.length,
+      active: conversations.filter(c => c.status === 'active').length,
+      'follow-up': conversations.filter(c => c.status === 'follow-up').length,
+      closed: conversations.filter(c => c.status === 'closed').length
+    }
+    return counts
+  }, [conversations])
+
   // Filter and search logic
   const filteredConversations = useMemo(() => {
     return conversations.filter(conversation => {
       // Status filter
       const matchesStatus = statusFilter === 'all' || conversation.status === statusFilter
-      
+
       // Search filter
-      const matchesSearch = searchText === '' || 
+      const matchesSearch = searchText === '' ||
         conversation.senderName.toLowerCase().includes(searchText.toLowerCase()) ||
         conversation.lastMessage.toLowerCase().includes(searchText.toLowerCase())
-      
+
       return matchesStatus && matchesSearch
     })
   }, [conversations, searchText, statusFilter])
@@ -176,6 +187,7 @@ export default function ConversationList({ conversations, onSelectConversation }
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {(['all', 'active', 'follow-up', 'closed'] as const).map((filter) => {
             const isActive = statusFilter === filter
+            const count = statusCounts[filter]
             return (
               <button
                 key={filter}
@@ -189,7 +201,10 @@ export default function ConversationList({ conversations, onSelectConversation }
                   fontSize: '0.875rem',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
@@ -202,7 +217,20 @@ export default function ConversationList({ conversations, onSelectConversation }
                   }
                 }}
               >
-                {filter === 'all' ? 'All' : getStatusLabel(filter as ConversationStatus)}
+                <span>{filter === 'all' ? 'All' : getStatusLabel(filter as ConversationStatus)}</span>
+                <span
+                  style={{
+                    backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
+                    borderRadius: '0.375rem',
+                    padding: '0.125rem 0.375rem',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    minWidth: '1.25rem',
+                    textAlign: 'center'
+                  }}
+                >
+                  {count}
+                </span>
               </button>
             )
           })}

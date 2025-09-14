@@ -14,6 +14,8 @@ export interface Message {
 export interface Suggestion {
   id: string
   text: string
+  responseType: 'discovery' | 'qualify' | 'offer'
+  rationale: string
 }
 
 interface ConversationViewProps {
@@ -69,34 +71,127 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
     const mockSuggestions: Suggestion[] = [
       {
         id: '1',
-        text: "Thank you for your interest! I'd love to schedule a quick call to discuss how we can help with your specific needs."
+        text: "Thank you for your interest! I'd love to schedule a quick call to discuss how we can help with your specific needs.",
+        responseType: 'discovery',
+        rationale: "This response aims to gather more information about the prospect's needs and challenges through a discovery call"
       },
       {
-        id: '2', 
-        text: "I understand your concerns. Let me address each point and show you the value proposition our solution offers."
+        id: '2',
+        text: "I understand your concerns. Let me address each point and show you the value proposition our solution offers.",
+        responseType: 'qualify',
+        rationale: "This response qualifies the prospect by addressing objections and demonstrating value to determine purchase readiness"
       },
       {
         id: '3',
-        text: "Based on what you've shared, I think our premium solution would be perfect for your business requirements."
+        text: "Based on what you've shared, I think our premium solution would be perfect for your business requirements.",
+        responseType: 'offer',
+        rationale: "This response presents a specific solution recommendation based on the prospect's stated requirements"
       },
       {
         id: '4',
-        text: "I appreciate you taking the time to evaluate our service. Would you like me to prepare a customized demo for your team?"
+        text: "I appreciate you taking the time to evaluate our service. Would you like me to prepare a customized demo for your team?",
+        responseType: 'discovery',
+        rationale: "This response seeks to uncover decision-making process and stakeholders through a demo opportunity"
       }
     ]
-    
+
     setSuggestions(mockSuggestions)
     setHasSuggestionsGenerated(true)
   }
 
-  const handleSendMessage = (messageText: string) => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text: messageText,
-      isUser: true,
-      timestamp: new Date()
+  const generateCustomSuggestions = async (userInput: string) => {
+    const input = userInput.toLowerCase()
+    let customSuggestions: Suggestion[] = []
+
+    if (input.includes('formal') || input.includes('professional')) {
+      customSuggestions = [
+        {
+          id: 'formal-1',
+          text: "Thank you for your inquiry. I would be pleased to arrange a formal consultation to discuss your requirements in detail.",
+          responseType: 'discovery',
+          rationale: "Professional tone focused on formal business engagement"
+        },
+        {
+          id: 'formal-2',
+          text: "I acknowledge your concerns and would like to provide a comprehensive analysis of how our solution addresses your specific business objectives.",
+          responseType: 'qualify',
+          rationale: "Formal response addressing concerns with professional language"
+        }
+      ]
+    } else if (input.includes('short') || input.includes('brief') || input.includes('concise')) {
+      customSuggestions = [
+        {
+          id: 'short-1',
+          text: "Let's schedule a quick call to discuss your needs.",
+          responseType: 'discovery',
+          rationale: "Brief, direct approach to scheduling discovery call"
+        },
+        {
+          id: 'short-2',
+          text: "Happy to address your concerns. When can we talk?",
+          responseType: 'qualify',
+          rationale: "Concise response that moves toward qualification"
+        }
+      ]
+    } else if (input.includes('discovery') || input.includes('questions') || input.includes('learn')) {
+      customSuggestions = [
+        {
+          id: 'discovery-1',
+          text: "I'd love to learn more about your current challenges. What's the biggest obstacle you're facing right now?",
+          responseType: 'discovery',
+          rationale: "Direct discovery question to uncover pain points"
+        },
+        {
+          id: 'discovery-2',
+          text: "To better understand your needs, could you tell me about your current process and where you see room for improvement?",
+          responseType: 'discovery',
+          rationale: "Open-ended discovery question about current state and desired improvements"
+        }
+      ]
+    } else if (input.includes('offer') || input.includes('proposal') || input.includes('solution')) {
+      customSuggestions = [
+        {
+          id: 'offer-1',
+          text: "Based on what you've shared, I have the perfect solution for your business. Can I walk you through our premium package?",
+          responseType: 'offer',
+          rationale: "Direct offer presentation based on discovered needs"
+        },
+        {
+          id: 'offer-2',
+          text: "I'd like to propose a customized solution that addresses your specific requirements. Would you be interested in seeing a detailed proposal?",
+          responseType: 'offer',
+          rationale: "Formal solution proposal with customization emphasis"
+        }
+      ]
+    } else {
+      customSuggestions = [
+        {
+          id: 'custom-1',
+          text: "Thank you for that insight. How can I best help you move forward with this?",
+          responseType: 'discovery',
+          rationale: "Generic response that seeks to understand next steps"
+        },
+        {
+          id: 'custom-2',
+          text: "I appreciate you sharing that with me. What would be the most valuable next step for you?",
+          responseType: 'qualify',
+          rationale: "Follow-up response that qualifies next steps and interest level"
+        },
+        {
+          id: 'custom-3',
+          text: "That's exactly what our solution is designed to address. Would you like to see how it works?",
+          responseType: 'offer',
+          rationale: "Generic solution-focused response with demonstration offer"
+        }
+      ]
     }
-    setMessages(prev => [...prev, newMessage])
+
+    setSuggestions(prev => [...prev, ...customSuggestions])
+    setHasSuggestionsGenerated(true)
+  }
+
+  const handleSendMessage = (messageText: string) => {
+    generateCustomSuggestions(messageText)
   }
 
   return (
@@ -245,26 +340,32 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
         </div>
       </div>
 
-      {/* Messages and suggestions */}
-      <div 
+      {/* Messages only */}
+      <div
         className="flex-1 relative"
-        style={{ 
-          flex: 1, 
-          position: 'relative' 
+        style={{
+          flex: 1,
+          position: 'relative',
+          minHeight: 0,
+          maxHeight: '100%',
+          overflow: 'hidden'
         }}
       >
-        <div 
-          style={{ 
-            height: '100%', 
+        <div
+          style={{
+            height: '100%',
+            maxHeight: '100%',
             overflowY: 'auto',
-            padding: '1rem' 
+            padding: '1rem',
+            boxSizing: 'border-box',
+            position: 'relative'
           }}
         >
           {/* Messages */}
           <div style={{ marginBottom: '1.5rem' }}>
             {messages.map((message) => (
-              <div 
-                key={message.id} 
+              <div
+                key={message.id}
                 style={{
                   marginBottom: '1rem',
                   maxWidth: '80%',
@@ -276,16 +377,16 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                   padding: '0.75rem'
                 }}
               >
-                <p style={{ 
-                  fontSize: '0.875rem', 
+                <p style={{
+                  fontSize: '0.875rem',
                   lineHeight: '1.6',
                   margin: 0,
                   marginBottom: '0.25rem'
                 }}>
                   {message.text}
                 </p>
-                <span style={{ 
-                  fontSize: '0.75rem', 
+                <span style={{
+                  fontSize: '0.75rem',
                   opacity: 0.7,
                   display: 'block'
                 }}>
@@ -298,7 +399,7 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
           {/* Generate suggestions button */}
           {!hasSuggestionsGenerated && (
             <div style={{ textAlign: 'center', margin: '2rem 0' }}>
-              <button 
+              <button
                 onClick={generateSuggestions}
                 style={{
                   backgroundColor: '#ed1c24',
@@ -318,14 +419,37 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
               </button>
             </div>
           )}
+        </div>
+      </div>
 
-          {/* Suggestions */}
-          {suggestions.length > 0 && (
-            <div style={{ marginTop: '1.5rem' }}>
-              <h3 
-                style={{ 
-                  fontSize: '1.125rem', 
-                  fontWeight: '600', 
+      {/* Bottom section with Chat input and Suggestions */}
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          maxHeight: '60vh'
+        }}
+      >
+        {/* Chat input */}
+        <ChatInput onSendMessage={handleSendMessage} />
+
+        {/* Suggestions section */}
+        {suggestions.length > 0 && (
+          <div
+            style={{
+              borderTop: '1px solid #e5e5e5',
+              backgroundColor: '#f9f9f9',
+              flex: 1,
+              overflowY: 'auto',
+              minHeight: 0
+            }}
+          >
+            <div style={{ padding: '1rem' }}>
+              <h3
+                style={{
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
                   color: '#1c1c1c',
                   marginBottom: '1rem',
                   margin: '0 0 1rem 0'
@@ -335,19 +459,18 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
               </h3>
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 {suggestions.map((suggestion) => (
-                  <SuggestionCard 
+                  <SuggestionCard
                     key={suggestion.id}
                     suggestion={suggestion.text}
+                    responseType={suggestion.responseType}
+                    rationale={suggestion.rationale}
                   />
                 ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
-
-      {/* Chat input */}
-      <ChatInput onSendMessage={handleSendMessage} />
     </div>
   )
 }
