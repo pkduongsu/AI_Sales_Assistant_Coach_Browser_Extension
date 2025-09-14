@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { type Conversation } from './ConversationList'
 import SuggestionCard from './SuggestionCard'
 import ChatInput from './ChatInput'
+import { ArrowLeft } from 'lucide-react'
 
 export interface Message {
   id: string
@@ -73,45 +74,141 @@ export default function ConversationView({ conversation, onGoBack }: Conversatio
   }
 
   return (
-    <div className="conversation-view">
-      <div className="conversation-header">
-        <button onClick={onGoBack} className="back-btn">
-          ← Back
+    <div className="flex flex-col h-full">
+      {/* Header with red background */}
+      <div 
+        className="bg-primary text-primary-foreground p-4 flex items-center gap-3 flex-shrink-0"
+        style={{ 
+          backgroundColor: '#ed1c24', 
+          color: '#ffffff', 
+          padding: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexShrink: 0
+        }}
+      >
+        <button 
+          onClick={onGoBack}
+          style={{
+            backgroundColor: 'transparent',
+            border: 'none',
+            color: '#ffffff',
+            padding: '0.5rem',
+            borderRadius: '0.375rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.875rem',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />
+          Back
         </button>
-        <h2 className="conversation-title">{conversation.senderName}</h2>
+        <h2 
+          className="text-lg font-semibold"
+          style={{ 
+            fontSize: '1.125rem', 
+            fontWeight: '600',
+            margin: 0
+          }}
+        >
+          {conversation.senderName}
+        </h2>
       </div>
 
-      <div className="conversation-content">
-        <div className="scrollable-content">
-          <div className="messages-container">
+      {/* Messages and suggestions */}
+      <div 
+        className="flex-1 relative"
+        style={{ 
+          flex: 1, 
+          position: 'relative' 
+        }}
+      >
+        <div 
+          style={{ 
+            height: '100%', 
+            overflowY: 'auto',
+            padding: '1rem' 
+          }}
+        >
+          {/* Messages */}
+          <div style={{ marginBottom: '1.5rem' }}>
             {messages.map((message) => (
               <div 
                 key={message.id} 
-                className={`message ${message.isUser ? 'user-message' : 'other-message'}`}
+                style={{
+                  marginBottom: '1rem',
+                  maxWidth: '80%',
+                  marginLeft: message.isUser ? 'auto' : '0',
+                  marginRight: message.isUser ? '0' : 'auto',
+                  backgroundColor: message.isUser ? '#ed1c24' : '#f5f5f5',
+                  color: message.isUser ? '#ffffff' : '#1c1c1c',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem'
+                }}
               >
-                <p>{message.text}</p>
-                <span className="message-timestamp">
+                <p style={{ 
+                  fontSize: '0.875rem', 
+                  lineHeight: '1.6',
+                  margin: 0,
+                  marginBottom: '0.25rem'
+                }}>
+                  {message.text}
+                </p>
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  opacity: 0.7,
+                  display: 'block'
+                }}>
                   {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
             ))}
           </div>
 
+          {/* Generate suggestions button */}
           {!hasSuggestionsGenerated && (
-            <div className="generate-suggestions-container">
+            <div style={{ textAlign: 'center', margin: '2rem 0' }}>
               <button 
                 onClick={generateSuggestions}
-                className="generate-suggestions-btn"
+                style={{
+                  backgroundColor: '#ed1c24',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d91920'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ed1c24'}
               >
                 Generate Initial Suggestions
               </button>
             </div>
           )}
 
+          {/* Suggestions */}
           {suggestions.length > 0 && (
-            <div className="suggestions-container">
-              <h3>Suggested Responses</h3>
-              <div className="suggestions-grid">
+            <div style={{ marginTop: '1.5rem' }}>
+              <h3 
+                style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: '600', 
+                  color: '#1c1c1c',
+                  marginBottom: '1rem',
+                  margin: '0 0 1rem 0'
+                }}
+              >
+                Suggested Responses
+              </h3>
+              <div style={{ display: 'grid', gap: '0.75rem' }}>
                 {suggestions.map((suggestion) => (
                   <SuggestionCard 
                     key={suggestion.id}
@@ -124,6 +221,7 @@ export default function ConversationView({ conversation, onGoBack }: Conversatio
         </div>
       </div>
 
+      {/* Chat input */}
       <ChatInput onSendMessage={handleSendMessage} />
     </div>
   )

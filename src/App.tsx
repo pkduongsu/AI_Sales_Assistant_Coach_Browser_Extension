@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import ConversationList, { type Conversation } from './components/ConversationList'
 import ConversationView from './components/ConversationView'
-import './App.css'
 
 function App() {
   const [currentView, setCurrentView] = useState<'list' | 'conversation'>('list')
@@ -18,7 +17,16 @@ function App() {
   }
 
   return (
-    <div className="sales-assistant">
+    <div 
+      className="w-full h-screen overflow-hidden bg-background font-sans"
+      style={{ 
+        width: '100%', 
+        height: '100vh', 
+        overflow: 'hidden', 
+        backgroundColor: '#ffffff',
+        fontFamily: 'system-ui, -apple-system, sans-serif'
+      }}
+    >
       {currentView === 'list' ? (
         <ConversationList onSelectConversation={handleSelectConversation} />
       ) : (
