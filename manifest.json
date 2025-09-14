@@ -3,6 +3,12 @@
     "name": "Career Mentor AI Sales Assistant",
     "description": "AI Sales Assistant suggesting possible responses appropriate to sales context.",
     "version": "1.0",
+    "icons": {
+        "16": "icons/CM_logo_16.png",
+        "32": "icons/CM_logo_32.png",
+        "48": "icons/CM_logo_48.png",
+        "128": "icons/CM_logo_128.png"
+    },
     "action": {
         "default_title": "Open side panel"
     },

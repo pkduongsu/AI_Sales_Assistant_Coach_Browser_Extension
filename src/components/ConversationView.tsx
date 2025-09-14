@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { type Conversation } from './ConversationList'
+import { type Conversation, type ConversationStatus } from './ConversationList'
 import SuggestionCard from './SuggestionCard'
 import ChatInput from './ChatInput'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Circle, Clock, Check, ChevronDown } from 'lucide-react'
 
 export interface Message {
   id: string
@@ -19,12 +19,38 @@ export interface Suggestion {
 interface ConversationViewProps {
   conversation: Conversation
   onGoBack: () => void
+  onUpdateStatus: (conversationId: string, newStatus: ConversationStatus) => void
 }
 
-export default function ConversationView({ conversation, onGoBack }: ConversationViewProps) {
+export default function ConversationView({ conversation, onGoBack, onUpdateStatus }: ConversationViewProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [hasSuggestionsGenerated, setHasSuggestionsGenerated] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+
+  const getStatusIcon = (status: ConversationStatus) => {
+    switch (status) {
+      case 'active': return <Circle className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
+      case 'follow-up': return <Clock className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
+      case 'closed': return <Check className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
+    }
+  }
+
+  const getStatusColor = (status: ConversationStatus) => {
+    switch (status) {
+      case 'active': return { bg: '#10b981', text: '#1c1c1c' }
+      case 'follow-up': return { bg: '#f59e0b', text: '#1c1c1c' }
+      case 'closed': return { bg: '#6b7280', text: '#1c1c1c' }
+    }
+  }
+
+  const getStatusLabel = (status: ConversationStatus) => {
+    switch (status) {
+      case 'active': return 'Active'
+      case 'follow-up': return 'Follow Up'
+      case 'closed': return 'Closed'
+    }
+  }
 
   useEffect(() => {
     setMessages([
@@ -113,11 +139,110 @@ export default function ConversationView({ conversation, onGoBack }: Conversatio
           style={{ 
             fontSize: '1.125rem', 
             fontWeight: '600',
-            margin: 0
+            margin: 0,
+            flex: 1
           }}
         >
           {conversation.senderName}
         </h2>
+        
+        {/* Status Management Button */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowStatusDropdown(!showStatusDropdown)}
+            style={{
+              backgroundColor: '#ffffff',
+              color: '#1c1c1c',
+              border: 'none',
+              borderRadius: '0.375rem',
+              padding: '0.5rem 0.75rem',
+              fontSize: '0.875rem',
+              fontWeight: '500',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)'
+            }}
+          >
+            {getStatusIcon(conversation.status)}
+            {getStatusLabel(conversation.status)}
+            <ChevronDown style={{ width: '0.75rem', height: '0.75rem' }} />
+          </button>
+          
+          {/* Status Dropdown */}
+          {showStatusDropdown && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '0.5rem',
+                backgroundColor: '#ffffff',
+                border: '1px solid #e5e5e5',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                zIndex: 10,
+                minWidth: '150px'
+              }}
+            >
+              {(['active', 'follow-up', 'closed'] as ConversationStatus[]).map((status) => {
+                const statusColor = getStatusColor(status)
+                const isCurrentStatus = conversation.status === status
+                return (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      onUpdateStatus(conversation.id, status)
+                      setShowStatusDropdown(false)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: 'none',
+                      backgroundColor: isCurrentStatus ? '#f5f5f5' : 'transparent',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      fontSize: '0.875rem',
+                      borderRadius: status === 'active' ? '0.5rem 0.5rem 0 0' : 
+                                  status === 'closed' ? '0 0 0.5rem 0.5rem' : '0'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isCurrentStatus) {
+                        e.currentTarget.style.backgroundColor = '#f9f9f9'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isCurrentStatus) {
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
+                    }}
+                  >
+                    <div
+                      style={{
+                        backgroundColor: statusColor.bg,
+                        color: '#ffffff',
+                        borderRadius: '50%',
+                        width: '1rem',
+                        height: '1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      {getStatusIcon(status)}
+                    </div>
+                    <span style={{ color: '#1c1c1c' }}>
+                      {getStatusLabel(status)}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Messages and suggestions */}
