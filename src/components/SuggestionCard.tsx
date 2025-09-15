@@ -40,25 +40,12 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
   }
 
   return (
-    <div 
-      style={{
-        backgroundColor: '#f5f5f5',
-        border: '1px solid #e5e5e5',
-        borderRadius: '0.5rem',
-        transition: 'border-color 0.2s'
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.borderColor = '#ed1c24'}
-      onMouseLeave={(e) => e.currentTarget.style.borderColor = '#e5e5e5'}
+    <div
+      className="bg-gray-100 border border-gray-200 rounded-lg transition-colors hover:border-red-600"
     >
-      <div style={{ padding: '1rem' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '0.75rem'
-          }}
-        >
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+
           {/* Response Type Button with Tooltip */}
           <div style={{ position: 'relative' }}>
             <button
@@ -69,8 +56,8 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
                 color: '#ffffff',
                 border: 'none',
                 borderRadius: '0.375rem',
-                padding: '0.25rem 0.75rem',
-                fontSize: '0.75rem',
+                padding: 'var(--space-xs) var(--space-md)',
+                fontSize: 'var(--text-xs)',
                 fontWeight: '500',
                 cursor: 'default',
                 transition: 'background-color 0.2s'
@@ -86,15 +73,15 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
                   position: 'absolute',
                   bottom: '100%',
                   left: '0',
-                  marginBottom: '0.5rem',
+                  marginBottom: 'var(--space-sm)',
                   backgroundColor: '#1c1c1c',
                   color: '#ffffff',
-                  padding: '0.5rem 0.75rem',
+                  padding: 'var(--space-sm) var(--space-md)',
                   borderRadius: '0.375rem',
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--text-xs)',
                   width: 'max-content',
-                  maxWidth: '300px',
-                  minWidth: '200px',
+                  maxWidth: 'clamp(250px, 50vw, 350px)',
+                  minWidth: 'clamp(150px, 30vw, 200px)',
                   whiteSpace: 'normal',
                   lineHeight: '1.4',
                   boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
@@ -107,7 +94,7 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
                   style={{
                     position: 'absolute',
                     top: '100%',
-                    left: '1rem',
+                    left: 'var(--space-lg)',
                     width: '0',
                     height: '0',
                     borderLeft: '6px solid transparent',
@@ -126,32 +113,33 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
               backgroundColor: '#ffffff',
               border: '1px solid #d1d5db',
               borderRadius: '0.375rem',
-              padding: '0.25rem 0.75rem',
-              fontSize: '0.75rem',
+              padding: 'var(--space-xs) var(--space-md)',
+              fontSize: 'var(--text-xs)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              transition: 'background-color 0.2s'
+              transition: 'background-color 0.2s',
+              minHeight: 'calc(var(--button-height) * 0.7)'
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffffff'}
           >
             {isCopied ? (
               <>
-                <Check className="h-3 w-3 mr-1" style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
+                <Check className="h-3 w-3 mr-1" style={{ width: 'var(--text-xs)', height: 'var(--text-xs)', marginRight: 'var(--space-xs)' }} />
                 Copied!
               </>
             ) : (
               <>
-                <Copy className="h-3 w-3 mr-1" style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
+                <Copy className="h-3 w-3 mr-1" style={{ width: 'var(--text-xs)', height: 'var(--text-xs)', marginRight: 'var(--space-xs)' }} />
                 Copy
               </>
             )}
           </button>
         </div>
-        <p 
-          style={{ 
-            fontSize: '0.875rem', 
+        <p
+          style={{
+            fontSize: 'var(--text-sm)',
             color: '#1c1c1c',
             lineHeight: '1.6',
             margin: 0

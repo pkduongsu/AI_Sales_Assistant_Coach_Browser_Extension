@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { type Conversation, type ConversationStatus } from './ConversationList'
 import SuggestionCard from './SuggestionCard'
 import ChatInput from './ChatInput'
@@ -18,6 +18,12 @@ export interface Suggestion {
   rationale: string
 }
 
+export interface UserMessage {
+  id: string
+  text: string
+  timestamp: Date
+}
+
 interface ConversationViewProps {
   conversation: Conversation
   onGoBack: () => void
@@ -27,8 +33,10 @@ interface ConversationViewProps {
 export default function ConversationView({ conversation, onGoBack, onUpdateStatus }: ConversationViewProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+  const [userMessages, setUserMessages] = useState<UserMessage[]>([])
   const [hasSuggestionsGenerated, setHasSuggestionsGenerated] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const suggestionsRef = useRef<HTMLDivElement | null>(null)
 
   const getStatusIcon = (status: ConversationStatus) => {
     switch (status) {
@@ -64,6 +72,7 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
       }
     ])
     setSuggestions([])
+    setUserMessages([])
     setHasSuggestionsGenerated(false)
   }, [conversation])
 
@@ -191,48 +200,64 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
   }
 
   const handleSendMessage = (messageText: string) => {
+    // Add user message to suggestion context
+    const newUserMessage: UserMessage = {
+      id: `user-${Date.now()}`,
+      text: messageText,
+      timestamp: new Date()
+    }
+    setUserMessages(prev => [...prev, newUserMessage])
+
+    // Generate suggestions based on the message
     generateCustomSuggestions(messageText)
   }
 
+  useEffect(() => {
+    const el = suggestionsRef.current
+    if (!el || (suggestions.length === 0 && userMessages.length === 0)) return
+
+    // Use setTimeout to ensure DOM has fully updated and content has rendered
+    setTimeout(() => {
+      if (el) {
+        el.scrollTo({
+          top: el.scrollHeight,
+          behavior: 'smooth'
+        })
+      }
+    }, 100)
+  }, [suggestions, userMessages])
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col min-h-0" style={{ height: '100dvh' }}>
       {/* Header with red background */}
-      <div 
-        className="bg-primary text-primary-foreground p-4 flex items-center gap-3 flex-shrink-0"
-        style={{ 
-          backgroundColor: '#ed1c24', 
-          color: '#ffffff', 
-          padding: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          flexShrink: 0
-        }}
+      <div
+        className="bg-red-600 text-white flex items-center gap-3 flex-shrink-0 p-4 min-h-16"
       >
-        <button 
+        <button
           onClick={onGoBack}
           style={{
             backgroundColor: 'transparent',
             border: 'none',
             color: '#ffffff',
-            padding: '0.5rem',
+            padding: 'var(--space-sm)',
             borderRadius: '0.375rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
-            fontSize: '0.875rem',
-            transition: 'background-color 0.2s'
+            fontSize: 'var(--text-sm)',
+            transition: 'background-color 0.2s',
+            minHeight: 'var(--button-height)'
           }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
-          <ArrowLeft className="h-4 w-4 mr-1" style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />
+          <ArrowLeft className="h-4 w-4 mr-1" style={{ width: 'var(--text-base)', height: 'var(--text-base)', marginRight: 'var(--space-xs)' }} />
           Back
         </button>
-        <h2 
-          className="text-lg font-semibold"
-          style={{ 
-            fontSize: '1.125rem', 
+        <h2
+          className="font-semibold"
+          style={{
+            fontSize: 'var(--text-lg)',
             fontWeight: '600',
             margin: 0,
             flex: 1
@@ -250,19 +275,20 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
               color: '#1c1c1c',
               border: 'none',
               borderRadius: '0.375rem',
-              padding: '0.5rem 0.75rem',
-              fontSize: '0.875rem',
+              padding: 'var(--space-sm) var(--space-md)',
+              fontSize: 'var(--text-sm)',
               fontWeight: '500',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)'
+              gap: 'var(--space-sm)',
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+              minHeight: 'var(--button-height)'
             }}
           >
             {getStatusIcon(conversation.status)}
             {getStatusLabel(conversation.status)}
-            <ChevronDown style={{ width: '0.75rem', height: '0.75rem' }} />
+            <ChevronDown style={{ width: 'var(--text-xs)', height: 'var(--text-xs)' }} />
           </button>
           
           {/* Status Dropdown */}
@@ -272,13 +298,13 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                 position: 'absolute',
                 top: '100%',
                 right: 0,
-                marginTop: '0.5rem',
+                marginTop: 'var(--space-sm)',
                 backgroundColor: '#ffffff',
                 border: '1px solid #e5e5e5',
                 borderRadius: '0.5rem',
                 boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                 zIndex: 10,
-                minWidth: '150px'
+                minWidth: 'clamp(120px, 30vw, 180px)'
               }}
             >
               {(['active', 'follow-up', 'closed'] as ConversationStatus[]).map((status) => {
@@ -293,15 +319,15 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                     }}
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
+                      padding: 'var(--space-md)',
                       border: 'none',
                       backgroundColor: isCurrentStatus ? '#f5f5f5' : 'transparent',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem',
-                      fontSize: '0.875rem',
-                      borderRadius: status === 'active' ? '0.5rem 0.5rem 0 0' : 
+                      gap: 'var(--space-sm)',
+                      fontSize: 'var(--text-sm)',
+                      borderRadius: status === 'active' ? '0.5rem 0.5rem 0 0' :
                                   status === 'closed' ? '0 0 0.5rem 0.5rem' : '0'
                     }}
                     onMouseEnter={(e) => {
@@ -320,8 +346,8 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                         backgroundColor: statusColor.bg,
                         color: '#ffffff',
                         borderRadius: '50%',
-                        width: '1rem',
-                        height: '1rem',
+                        width: 'var(--text-base)',
+                        height: 'var(--text-base)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center'
@@ -340,53 +366,51 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
         </div>
       </div>
 
-      {/* Messages only */}
-      <div
-        className="flex-1 relative"
-        style={{
-          flex: 1,
-          position: 'relative',
-          minHeight: 0,
-          maxHeight: '100%',
-          overflow: 'hidden'
-        }}
-      >
+      {/* Two-section layout with simple CSS */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0
+      }}>
+        {/* Chat History Section */}
         <div
           style={{
-            height: '100%',
-            maxHeight: '100%',
+            flex: '0 0 200px',
             overflowY: 'auto',
-            padding: '1rem',
+            overflowX: 'hidden',
+            padding: 'var(--space-lg)',
+            backgroundColor: '#ffffff',
             boxSizing: 'border-box',
-            position: 'relative'
+            WebkitOverflowScrolling: 'touch'
           }}
         >
           {/* Messages */}
-          <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ marginBottom: 'var(--space-xl)' }}>
             {messages.map((message) => (
               <div
                 key={message.id}
                 style={{
-                  marginBottom: '1rem',
-                  maxWidth: '80%',
+                  marginBottom: 'var(--space-lg)',
+                  maxWidth: 'clamp(250px, 80%, 400px)',
                   marginLeft: message.isUser ? 'auto' : '0',
                   marginRight: message.isUser ? '0' : 'auto',
                   backgroundColor: message.isUser ? '#ed1c24' : '#f5f5f5',
                   color: message.isUser ? '#ffffff' : '#1c1c1c',
                   borderRadius: '0.5rem',
-                  padding: '0.75rem'
+                  padding: 'var(--card-padding)'
                 }}
               >
                 <p style={{
-                  fontSize: '0.875rem',
+                  fontSize: 'var(--text-sm)',
                   lineHeight: '1.6',
                   margin: 0,
-                  marginBottom: '0.25rem'
+                  marginBottom: 'var(--space-xs)'
                 }}>
                   {message.text}
                 </p>
                 <span style={{
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--text-xs)',
                   opacity: 0.7,
                   display: 'block'
                 }}>
@@ -398,7 +422,7 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
 
           {/* Generate suggestions button */}
           {!hasSuggestionsGenerated && (
-            <div style={{ textAlign: 'center', margin: '2rem 0' }}>
+            <div style={{ textAlign: 'center', margin: 'var(--space-2xl) 0' }}>
               <button
                 onClick={generateSuggestions}
                 style={{
@@ -406,11 +430,12 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '0.375rem',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
+                  padding: 'var(--space-md) var(--space-xl)',
+                  fontSize: 'var(--text-sm)',
                   fontWeight: '500',
                   cursor: 'pointer',
-                  transition: 'background-color 0.2s'
+                  transition: 'background-color 0.2s',
+                  minHeight: 'var(--button-height)'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d91920'}
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ed1c24'}
@@ -420,56 +445,137 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
             </div>
           )}
         </div>
-      </div>
 
-      {/* Bottom section with Chat input and Suggestions */}
-      <div
-        style={{
-          flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          maxHeight: '60vh'
-        }}
-      >
-        {/* Chat input */}
-        <ChatInput onSendMessage={handleSendMessage} />
+        {/* Input & Suggestions Section */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: '#f9f9f9',
+            borderTop: '2px solid #e5e5e5'
+          }}
+        >
+          {/* Chat input at top */}
+          <div style={{ flexShrink: 0 }}>
+            <ChatInput onSendMessage={handleSendMessage} />
+          </div>
 
-        {/* Suggestions section */}
-        {suggestions.length > 0 && (
+          {/* Suggestions section - always present, scrollable */}
           <div
+            className="flex-1 border-t border-gray-200 flex flex-col"
             style={{
-              borderTop: '1px solid #e5e5e5',
-              backgroundColor: '#f9f9f9',
-              flex: 1,
-              overflowY: 'auto',
-              minHeight: 0
+              height: 0,
+              minHeight: 0,
+              maxHeight: '100%'
             }}
           >
-            <div style={{ padding: '1rem' }}>
-              <h3
-                style={{
-                  fontSize: '1.125rem',
-                  fontWeight: '600',
-                  color: '#1c1c1c',
-                  marginBottom: '1rem',
-                  margin: '0 0 1rem 0'
-                }}
-              >
-                Suggested Responses
-              </h3>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {suggestions.map((suggestion) => (
-                  <SuggestionCard
-                    key={suggestion.id}
-                    suggestion={suggestion.text}
-                    responseType={suggestion.responseType}
-                    rationale={suggestion.rationale}
-                  />
-                ))}
+            {(suggestions.length > 0 || userMessages.length > 0) ? (
+              <>
+                {/* Header - fixed */}
+                <div className="p-4 pb-0 flex-shrink-0">
+                  <h3
+                    style={{
+                      fontSize: 'var(--text-lg)',
+                      fontWeight: '600',
+                      color: '#1c1c1c',
+                      margin: `0 0 var(--space-lg) 0`
+                    }}
+                  >
+                    {userMessages.length > 0 ? 'Conversation & Suggestions' : 'Suggested Responses'}
+                  </h3>
+                </div>
+                {/* Scrollable content */}
+                <div
+                  ref={suggestionsRef}
+                  style={{
+                    flex: '1 1 0',
+                    overflowY: 'scroll',
+                    overflowX: 'hidden',
+                    padding: '0 1rem 1rem 1rem',
+                    WebkitOverflowScrolling: 'touch',
+                    scrollbarWidth: 'auto',
+                    scrollbarColor: '#888888 #f1f1f1',
+                    maxHeight: 'calc(100vh - 350px)'
+                  }}
+                >
+                  <div className="flex flex-col gap-4">
+                    {/* Display user messages */}
+                    {userMessages.map((userMessage) => (
+                      <div
+                        key={userMessage.id}
+                        style={{
+                          marginBottom: 'var(--space-sm)',
+                          maxWidth: 'clamp(200px, 90%, 350px)',
+                          marginLeft: 'auto',
+                          marginRight: '0',
+                          backgroundColor: '#ed1c24',
+                          color: '#ffffff',
+                          borderRadius: '0.5rem',
+                          padding: 'var(--card-padding)'
+                        }}
+                      >
+                        <p style={{
+                          fontSize: 'var(--text-sm)',
+                          lineHeight: '1.6',
+                          margin: 0,
+                          marginBottom: 'var(--space-xs)'
+                        }}>
+                          {userMessage.text}
+                        </p>
+                        <span style={{
+                          fontSize: 'var(--text-xs)',
+                          opacity: 0.8,
+                          display: 'block'
+                        }}>
+                          You • {userMessage.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* Display suggestions after user messages */}
+                    {suggestions.length > 0 && (
+                      <>
+                        {userMessages.length > 0 && (
+                          <div style={{
+                            fontSize: 'var(--text-sm)',
+                            fontWeight: '600',
+                            color: '#6b7280',
+                            margin: 'var(--space-lg) 0 var(--space-sm) 0',
+                            textAlign: 'center'
+                          }}>
+                            Suggested Responses
+                          </div>
+                        )}
+                        {suggestions.map((suggestion) => (
+                          <SuggestionCard
+                            key={suggestion.id}
+                            suggestion={suggestion.text}
+                            responseType={suggestion.responseType}
+                            rationale={suggestion.rationale}
+                          />
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 'var(--space-lg)',
+                color: '#6b7280',
+                fontSize: 'var(--text-sm)',
+                textAlign: 'center'
+              }}>
+                <p>Trò chuyện cùng AI để cải thiện câu trả lời phù hợp</p>
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

@@ -83,15 +83,16 @@ export default function ConversationList({ conversations, onSelectConversation }
     <div className="flex flex-col h-full">
       {/* Header with red background */}
       <div
-        className="bg-primary text-primary-foreground p-4 flex-shrink-0"
+        className="bg-primary text-primary-foreground flex-shrink-0"
         style={{
           backgroundColor: '#ed1c24',
           color: '#ffffff',
-          padding: '1rem',
+          padding: 'var(--space-lg)',
           flexShrink: 0,
           display: 'flex',
           alignItems: 'center',
-          gap: '1rem'
+          gap: 'var(--space-lg)',
+          minHeight: 'var(--header-height)'
         }}
       >
         <img
@@ -104,46 +105,46 @@ export default function ConversationList({ conversations, onSelectConversation }
         />
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <h1
-            className="text-xl font-semibold mb-1"
+            className="font-semibold"
             style={{
-              fontSize: '1.25rem',
+              fontSize: 'var(--text-xl)',
               fontWeight: '600',
               margin: 0,
-              marginBottom: '0.25rem'
+              marginBottom: 'var(--space-xs)'
             }}
           >
-            Recent Conversations
+            Cuộc trò chuyện gần đây
           </h1>
           <p
-            className="text-sm opacity-90"
+            className="opacity-90"
             style={{
-              fontSize: '0.875rem',
+              fontSize: 'var(--text-sm)',
               opacity: '0.9',
               margin: 0
             }}
           >
-            Search and filter conversations below
+            Hiển thị những cuộc trò chuyện gần nhất
           </p>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div 
-        style={{ 
-          padding: '1rem', 
+      <div
+        style={{
+          padding: 'var(--space-lg)',
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #e5e5e5'
         }}
       >
         <div style={{ position: 'relative' }}>
           <Search 
-            style={{ 
-              position: 'absolute', 
-              left: '0.75rem', 
-              top: '50%', 
+            style={{
+              position: 'absolute',
+              left: 'var(--space-md)',
+              top: '50%',
               transform: 'translateY(-50%)',
-              width: '1rem', 
-              height: '1rem', 
+              width: 'var(--text-base)',
+              height: 'var(--text-base)',
               color: '#6b7280'
             }} 
           />
@@ -151,15 +152,16 @@ export default function ConversationList({ conversations, onSelectConversation }
             type="text"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            placeholder="Search conversations..."
+            placeholder="Tìm kiếm theo tên người nhắn / nội dung đoạn chat ..."
             style={{
               width: '100%',
-              padding: '0.75rem 2.5rem 0.75rem 2.5rem',
+              padding: 'var(--space-md) var(--space-2xl) var(--space-md) var(--space-2xl)',
               border: '1px solid #d1d5db',
               borderRadius: '0.5rem',
-              fontSize: '0.875rem',
+              fontSize: 'var(--text-sm)',
               outline: 'none',
-              transition: 'border-color 0.2s'
+              transition: 'border-color 0.2s',
+              minHeight: 'var(--input-height)'
             }}
             onFocus={(e) => {
               e.target.style.borderColor = '#ed1c24'
@@ -175,31 +177,31 @@ export default function ConversationList({ conversations, onSelectConversation }
               onClick={clearSearch}
               style={{
                 position: 'absolute',
-                right: '0.75rem',
+                right: 'var(--space-md)',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
                 color: '#6b7280',
-                padding: '0.25rem'
+                padding: 'var(--space-xs)'
               }}
             >
-              <X style={{ width: '1rem', height: '1rem' }} />
+              <X style={{ width: 'var(--text-base)', height: 'var(--text-base)' }} />
             </button>
           )}
         </div>
       </div>
 
       {/* Status Filter Tabs */}
-      <div 
-        style={{ 
-          padding: '0.5rem 1rem',
+      <div
+        style={{
+          padding: 'var(--space-sm) var(--space-lg)',
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #e5e5e5'
         }}
       >
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
           {(['all', 'active', 'follow-up', 'closed'] as const).map((filter) => {
             const isActive = statusFilter === filter
             const count = statusCounts[filter]
@@ -212,14 +214,15 @@ export default function ConversationList({ conversations, onSelectConversation }
                   color: isActive ? '#ffffff' : '#4a4a4a',
                   border: 'none',
                   borderRadius: '0.375rem',
-                  padding: '0.5rem 0.75rem',
-                  fontSize: '0.875rem',
+                  padding: 'var(--space-sm) var(--space-md)',
+                  fontSize: 'var(--text-sm)',
                   fontWeight: '500',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: 'var(--space-sm)',
+                  minHeight: 'var(--button-height)'
                 }}
                 onMouseEnter={(e) => {
                   if (!isActive) {
@@ -237,8 +240,8 @@ export default function ConversationList({ conversations, onSelectConversation }
                   style={{
                     backgroundColor: isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
                     borderRadius: '0.375rem',
-                    padding: '0.125rem 0.375rem',
-                    fontSize: '0.75rem',
+                    padding: 'var(--space-xs) var(--space-sm)',
+                    fontSize: 'var(--text-xs)',
                     fontWeight: '600',
                     minWidth: '1.25rem',
                     textAlign: 'center'
@@ -253,22 +256,22 @@ export default function ConversationList({ conversations, onSelectConversation }
       </div>
       
       {/* Conversations list */}
-      <div 
+      <div
         className="flex-1"
-        style={{ 
-          flex: 1, 
+        style={{
+          flex: 1,
           overflowY: 'auto',
-          height: 'calc(100vh - 220px)'
+          minHeight: 0
         }}
       >
-        <div style={{ padding: '0.5rem' }}>
+        <div style={{ padding: 'var(--space-sm)' }}>
           {filteredConversations.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '2rem',
+            <div style={{
+              textAlign: 'center',
+              padding: 'var(--space-2xl)',
               color: '#6b7280'
             }}>
-              <p style={{ margin: 0, fontSize: '0.875rem' }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>
                 {searchText ? 'No conversations match your search.' : 'No conversations found.'}
               </p>
             </div>
@@ -284,7 +287,7 @@ export default function ConversationList({ conversations, onSelectConversation }
                 backgroundColor: '#ffffff',
                 border: '1px solid #e5e5e5',
                 borderRadius: '0.5rem',
-                marginBottom: '0.75rem',
+                marginBottom: 'var(--space-md)',
                 cursor: 'pointer',
                 boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
                 transition: 'all 0.2s'
@@ -298,34 +301,37 @@ export default function ConversationList({ conversations, onSelectConversation }
                 e.currentTarget.style.borderColor = '#e5e5e5'
               }}
             >
-              <div style={{ padding: '1rem' }}>
+              <div style={{ padding: 'var(--card-padding)' }}>
                 <div 
                   className="flex justify-between items-center mb-2"
-                  style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    marginBottom: '0.5rem' 
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 'var(--space-sm)',
+                    flexWrap: 'wrap',
+                    gap: 'var(--space-xs)'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
-                    <h3 
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', flex: 1, minWidth: '200px' }}>
+                    <h3
                       className="font-semibold text-foreground"
-                      style={{ 
-                        fontWeight: '600', 
+                      style={{
+                        fontWeight: '600',
                         color: '#1c1c1c',
                         margin: 0,
-                        flex: 1
+                        flex: 1,
+                        fontSize: 'var(--text-base)'
                       }}
                     >
                       {conversation.senderName}
                     </h3>
-                    <span 
+                    <span
                       style={{
                         backgroundColor: statusColor.bg,
                         color: statusColor.text,
-                        fontSize: '0.75rem',
-                        padding: '0.25rem 0.5rem',
+                        fontSize: 'var(--text-xs)',
+                        padding: 'var(--space-xs) var(--space-sm)',
                         borderRadius: '0.375rem',
                         fontWeight: '500'
                       }}
@@ -333,23 +339,23 @@ export default function ConversationList({ conversations, onSelectConversation }
                       {getStatusLabel(conversation.status)}
                     </span>
                   </div>
-                  <span 
+                  <span
                     className="text-xs"
                     style={{
                       backgroundColor: '#f5f5f5',
                       color: '#4a4a4a',
-                      fontSize: '0.75rem',
-                      padding: '0.25rem 0.5rem',
+                      fontSize: 'var(--text-xs)',
+                      padding: 'var(--space-xs) var(--space-sm)',
                       borderRadius: '0.375rem'
                     }}
                   >
                     {formatTimestamp(conversation.timestamp)}
                   </span>
                 </div>
-                <p 
-                  className="text-sm text-muted-foreground line-clamp-2 leading-relaxed"
-                  style={{ 
-                    fontSize: '0.875rem', 
+                <p
+                  className="text-muted-foreground line-clamp-2 leading-relaxed"
+                  style={{
+                    fontSize: 'var(--text-sm)',
                     color: '#4a4a4a',
                     lineHeight: '1.6',
                     margin: 0,
