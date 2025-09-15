@@ -19,5 +19,11 @@
     "side_panel": {
         "default_path": "public/sidepanel.html"
     },
-    "permissions": ["sidePanel"]
+    "permissions": ["sidePanel"],
+    "web_accessible_resources": [
+        {
+            "resources": ["icons/*.png"],
+            "matches": ["<all_urls>"]
+        }
+    ]
 }

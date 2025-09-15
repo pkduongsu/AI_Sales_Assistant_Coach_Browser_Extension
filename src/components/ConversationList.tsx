@@ -82,34 +82,49 @@ export default function ConversationList({ conversations, onSelectConversation }
   return (
     <div className="flex flex-col h-full">
       {/* Header with red background */}
-      <div 
+      <div
         className="bg-primary text-primary-foreground p-4 flex-shrink-0"
-        style={{ 
-          backgroundColor: '#ed1c24', 
-          color: '#ffffff', 
+        style={{
+          backgroundColor: '#ed1c24',
+          color: '#ffffff',
           padding: '1rem',
-          flexShrink: 0
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem'
         }}
       >
-        <h1 
-          className="text-xl font-semibold mb-1"
-          style={{ 
-            fontSize: '1.25rem', 
-            fontWeight: '600', 
-            marginBottom: '0.25rem' 
+        <img
+          src={chrome.runtime.getURL('icons/CM_logo_48.png')}
+          alt="App Logo"
+          style={{
+            flexShrink: 0,
+            borderRadius: '50%'
           }}
-        >
-          Recent Conversations
-        </h1>
-        <p 
-          className="text-sm opacity-90"
-          style={{ 
-            fontSize: '0.875rem', 
-            opacity: '0.9' 
-          }}
-        >
-          Search and filter conversations below
-        </p>
+        />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h1
+            className="text-xl font-semibold mb-1"
+            style={{
+              fontSize: '1.25rem',
+              fontWeight: '600',
+              margin: 0,
+              marginBottom: '0.25rem'
+            }}
+          >
+            Recent Conversations
+          </h1>
+          <p
+            className="text-sm opacity-90"
+            style={{
+              fontSize: '0.875rem',
+              opacity: '0.9',
+              margin: 0
+            }}
+          >
+            Search and filter conversations below
+          </p>
+        </div>
       </div>
 
       {/* Search Bar */}
