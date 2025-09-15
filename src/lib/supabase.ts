@@ -1,9 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.SUPABASE_URL!;
-const supabaseKey = import.meta.env.SUPABASE__KEY!;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(
+const supabase = createClient(
   supabaseUrl, supabaseKey,
-  { auth: { persistSession: true, autoRefreshToken: true } }
-);
+  {
+  // Provide a custom schema. Defaults to "public".
+  db: { schema: 'assistant' }
+});
+
+export default supabase;

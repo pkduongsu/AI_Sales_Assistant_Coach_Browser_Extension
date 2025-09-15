@@ -1,5 +1,5 @@
 // src/features/conversations/api/listConversations.ts
-import { supabase } from '@/lib/supabase';
+import  supabase  from '@/lib/supabase';
 import type { ConversationRow, ListConversationsParams } from './types';
 
 export async function listConversations({

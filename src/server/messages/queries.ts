@@ -2,7 +2,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { listMessages } from "./api/listMessages";
 
-export function useMessages(threadId: string, opts?: { limit?: number; role?: "user"|"assistant"|"system" }) {
+export function useMessages(threadId: string, opts?: { limit?: number; role?: "user"|"assistant" }) {
   return useInfiniteQuery({
     queryKey: ["messages", threadId, opts?.role, opts?.limit],
     initialPageParam: null as null | { ts: string; mid: string },

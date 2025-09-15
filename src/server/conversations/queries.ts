@@ -1,8 +1,10 @@
 // src/features/conversations/queries.ts
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { qk } from '@/shared/queryKeys';
 import { listConversations } from './api/listConversations';
 import { getConversation } from './api/getConversations';
+import { updateConversationStatus } from './api/updateConversationStatus';
+import type { ConversationRow } from './api/types';
 
 export function useConversations(params: {
   pageId?: string;
@@ -29,5 +31,24 @@ export function useConversation(threadId: string) {
     queryKey: qk.conversations.byId(threadId),
     queryFn: () => getConversation(threadId),
     enabled: !!threadId,
+  });
+}
+
+export function useUpdateConversationStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ threadId, status }: { threadId: string; status: ConversationRow['conversation_status'] }) =>
+      updateConversationStatus(threadId, status),
+    onSuccess: (updatedConversation) => {
+      // Update the individual conversation cache
+      queryClient.setQueryData(
+        qk.conversations.byId(updatedConversation.thread_id),
+        updatedConversation
+      );
+
+      // Invalidate conversations list to refresh with updated status
+      queryClient.invalidateQueries({ queryKey: qk.conversations.list() });
+    },
   });
 }

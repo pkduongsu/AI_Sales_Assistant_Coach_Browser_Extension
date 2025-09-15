@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Search, X } from 'lucide-react'
 
-export type ConversationStatus = 'active' | 'follow-up' | 'closed'
+export type ConversationStatus = 'active' | 'follow up' | 'closed'
 
 export interface Conversation {
   id: string
@@ -14,11 +14,22 @@ export interface Conversation {
 interface ConversationListProps {
   conversations: Conversation[]
   onSelectConversation: (conversation: Conversation) => void
+  isLoading?: boolean
+  error?: Error | null
+  onLoadMore?: () => void
+  hasMore?: boolean
 }
 
 type FilterStatus = 'all' | ConversationStatus
 
-export default function ConversationList({ conversations, onSelectConversation }: ConversationListProps) {
+export default function ConversationList({
+  conversations,
+  onSelectConversation,
+  isLoading,
+  error,
+  onLoadMore,
+  hasMore
+}: ConversationListProps) {
   const [searchText, setSearchText] = useState('')
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all')
 
@@ -27,7 +38,7 @@ export default function ConversationList({ conversations, onSelectConversation }
     const counts = {
       all: conversations.length,
       active: conversations.filter(c => c.status === 'active').length,
-      'follow-up': conversations.filter(c => c.status === 'follow-up').length,
+      'follow up': conversations.filter(c => c.status === 'follow up').length,
       closed: conversations.filter(c => c.status === 'closed').length
     }
     return counts
@@ -53,7 +64,7 @@ export default function ConversationList({ conversations, onSelectConversation }
   const getStatusColor = (status: ConversationStatus) => {
     switch (status) {
       case 'active': return { bg: '#10b981', text: '#ffffff' } // Green
-      case 'follow-up': return { bg: '#f59e0b', text: '#ffffff' } // Orange
+      case 'follow up': return { bg: '#f59e0b', text: '#ffffff' } // Orange
       case 'closed': return { bg: '#6b7280', text: '#ffffff' } // Gray
     }
   }
@@ -61,7 +72,7 @@ export default function ConversationList({ conversations, onSelectConversation }
   const getStatusLabel = (status: ConversationStatus) => {
     switch (status) {
       case 'active': return 'Active'
-      case 'follow-up': return 'Follow Up'
+      case 'follow up': return 'Follow Up'
       case 'closed': return 'Closed'
     }
   }
@@ -171,6 +182,7 @@ export default function ConversationList({ conversations, onSelectConversation }
               e.target.style.borderColor = '#d1d5db'
               e.target.style.boxShadow = 'none'
             }}
+            className="ml-1"
           />
           {searchText && (
             <button
@@ -202,7 +214,7 @@ export default function ConversationList({ conversations, onSelectConversation }
         }}
       >
         <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
-          {(['all', 'active', 'follow-up', 'closed'] as const).map((filter) => {
+          {(['all', 'active', 'follow up', 'closed'] as const).map((filter) => {
             const isActive = statusFilter === filter
             const count = statusCounts[filter]
             return (
@@ -265,7 +277,23 @@ export default function ConversationList({ conversations, onSelectConversation }
         }}
       >
         <div style={{ padding: 'var(--space-sm)' }}>
-          {filteredConversations.length === 0 ? (
+          {isLoading && conversations.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: 'var(--space-2xl)',
+              color: '#6b7280'
+            }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Loading conversations...</p>
+            </div>
+          ) : error ? (
+            <div style={{
+              textAlign: 'center',
+              padding: 'var(--space-2xl)',
+              color: '#dc2626'
+            }}>
+              <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Error loading conversations: {error.message}</p>
+            </div>
+          ) : filteredConversations.length === 0 ? (
             <div style={{
               textAlign: 'center',
               padding: 'var(--space-2xl)',
@@ -276,7 +304,8 @@ export default function ConversationList({ conversations, onSelectConversation }
               </p>
             </div>
           ) : (
-            filteredConversations.map((conversation) => {
+            <>
+              {filteredConversations.map((conversation) => {
               const statusColor = getStatusColor(conversation.status)
               return (
             <div
@@ -370,7 +399,43 @@ export default function ConversationList({ conversations, onSelectConversation }
               </div>
             </div>
               )
-            })
+              })}
+
+              {/* Load more button */}
+              {hasMore && (
+                <div style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
+                  <button
+                    onClick={onLoadMore}
+                    disabled={isLoading}
+                    style={{
+                      backgroundColor: '#ed1c24',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '0.375rem',
+                      padding: 'var(--space-md) var(--space-xl)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: '500',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      transition: 'background-color 0.2s',
+                      minHeight: 'var(--button-height)',
+                      opacity: isLoading ? 0.6 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isLoading) {
+                        e.currentTarget.style.backgroundColor = '#d91920'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isLoading) {
+                        e.currentTarget.style.backgroundColor = '#ed1c24'
+                      }
+                    }}
+                  >
+                    {isLoading ? 'Loading...' : 'Load More'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

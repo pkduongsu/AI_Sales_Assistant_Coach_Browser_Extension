@@ -1,5 +1,5 @@
 // src/features/messages/api/listMessages.ts
-import { supabase } from "@/lib/supabase";
+import  supabase  from "@/lib/supabase";
 
 export type ListMessagesParams = {
   threadId: string;
@@ -8,13 +8,13 @@ export type ListMessagesParams = {
   before?: { ts: string; mid: string } | null;
   // Load newer messages (e.g., after reconnect): ts > after.ts
   after?: { ts: string; mid: string } | null;
-  role?: "user" | "assistant" | "system"; // optional filter
+  role?: "user" | "assistant" ; 
 };
 
 export type MessageRow = {
   mid: string;
   thread_id: string;
-  role: "user" | "assistant" | "system";
+  role: "user" | "assistant" ;
   text: string;
   ts: string; // ISO
 };

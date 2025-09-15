@@ -3,6 +3,10 @@ import { type Conversation, type ConversationStatus } from './ConversationList'
 import SuggestionCard from './SuggestionCard'
 import ChatInput from './ChatInput'
 import { ArrowLeft, Circle, Clock, Check, ChevronDown } from 'lucide-react'
+import { useMessages } from '../server/messages/queries'
+import type { MessageRow } from '../server/messages/api/listMessages'
+import { useSuggestion } from '../server/suggestions/queries'
+import { type Suggestion as APISuggestion } from '../server/suggestions/api/getSuggestion'
 
 export interface Message {
   id: string
@@ -30,18 +34,61 @@ interface ConversationViewProps {
   onUpdateStatus: (conversationId: string, newStatus: ConversationStatus) => void
 }
 
+// Helper function to map API suggestions to UI format
+function mapAPIToUISuggestions(apiSuggestions: APISuggestion[]): Suggestion[] {
+  console.log('Mapping API suggestions to UI format:', apiSuggestions);
+
+  if (!Array.isArray(apiSuggestions)) {
+    console.warn('Invalid apiSuggestions format:', apiSuggestions);
+    return [];
+  }
+
+  const mapped = apiSuggestions.map(apiSuggestion => {
+    if (!apiSuggestion) {
+      console.warn('Null/undefined suggestion found');
+      return null;
+    }
+
+    return {
+      id: apiSuggestion.id || 'unknown',
+      text: apiSuggestion.message || '',
+      responseType: apiSuggestion.type || 'discovery',
+      rationale: apiSuggestion.rationale || ''
+    };
+  }).filter(Boolean) as Suggestion[];
+
+  console.log('Mapped suggestions:', mapped);
+  return mapped;
+}
+
 export default function ConversationView({ conversation, onGoBack, onUpdateStatus }: ConversationViewProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
-  const [messages, setMessages] = useState<Message[]>([])
   const [userMessages, setUserMessages] = useState<UserMessage[]>([])
   const [hasSuggestionsGenerated, setHasSuggestionsGenerated] = useState(false)
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [shouldFetchSuggestions, setShouldFetchSuggestions] = useState(false)
   const suggestionsRef = useRef<HTMLDivElement | null>(null)
+
+  // Use real message data from Supabase
+  const { data: messagesData, isLoading: messagesLoading, error: messagesError } = useMessages(conversation.id)
+
+  // Use real suggestions data from API
+  const { data: suggestionsResponse, isLoading: suggestionsLoading, error: suggestionsError } = useSuggestion(
+    shouldFetchSuggestions ? conversation.id : ""
+  )
+
+  // Transform Supabase message data to UI format
+  const messages: Message[] = messagesData?.map((msg: MessageRow) => ({
+    id: msg.mid,
+    text: msg.text,
+    isUser: msg.role === 'user',
+    timestamp: new Date(msg.ts)
+  })) ?? []
 
   const getStatusIcon = (status: ConversationStatus) => {
     switch (status) {
       case 'active': return <Circle className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
-      case 'follow-up': return <Clock className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
+      case 'follow up': return <Clock className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
       case 'closed': return <Check className="h-3 w-3" style={{ width: '0.75rem', height: '0.75rem' }} />
     }
   }
@@ -49,7 +96,7 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
   const getStatusColor = (status: ConversationStatus) => {
     switch (status) {
       case 'active': return { bg: '#10b981', text: '#1c1c1c' }
-      case 'follow-up': return { bg: '#f59e0b', text: '#1c1c1c' }
+      case 'follow up': return { bg: '#f59e0b', text: '#1c1c1c' }
       case 'closed': return { bg: '#6b7280', text: '#1c1c1c' }
     }
   }
@@ -57,55 +104,50 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
   const getStatusLabel = (status: ConversationStatus) => {
     switch (status) {
       case 'active': return 'Active'
-      case 'follow-up': return 'Follow Up'
+      case 'follow up': return 'Follow Up'
       case 'closed': return 'Closed'
     }
   }
 
   useEffect(() => {
-    setMessages([
-      {
-        id: '1',
-        text: conversation.lastMessage,
-        isUser: false,
-        timestamp: conversation.timestamp
-      }
-    ])
     setSuggestions([])
     setUserMessages([])
     setHasSuggestionsGenerated(false)
+    setShouldFetchSuggestions(false)
   }, [conversation])
 
-  const generateSuggestions = async () => {
-    const mockSuggestions: Suggestion[] = [
-      {
-        id: '1',
-        text: "Thank you for your interest! I'd love to schedule a quick call to discuss how we can help with your specific needs.",
-        responseType: 'discovery',
-        rationale: "This response aims to gather more information about the prospect's needs and challenges through a discovery call"
-      },
-      {
-        id: '2',
-        text: "I understand your concerns. Let me address each point and show you the value proposition our solution offers.",
-        responseType: 'qualify',
-        rationale: "This response qualifies the prospect by addressing objections and demonstrating value to determine purchase readiness"
-      },
-      {
-        id: '3',
-        text: "Based on what you've shared, I think our premium solution would be perfect for your business requirements.",
-        responseType: 'offer',
-        rationale: "This response presents a specific solution recommendation based on the prospect's stated requirements"
-      },
-      {
-        id: '4',
-        text: "I appreciate you taking the time to evaluate our service. Would you like me to prepare a customized demo for your team?",
-        responseType: 'discovery',
-        rationale: "This response seeks to uncover decision-making process and stakeholders through a demo opportunity"
-      }
-    ]
+  // Handle suggestions API response
+  useEffect(() => {
+    if (suggestionsResponse && suggestionsResponse.length > 0) {
+      console.log('Processing suggestions response:', suggestionsResponse);
 
-    setSuggestions(mockSuggestions)
-    setHasSuggestionsGenerated(true)
+      // Get the first response item (should contain all suggestions)
+      const responseData = suggestionsResponse[0];
+      console.log('Response data:', responseData);
+
+      // Extract all suggestions directly (no filtering by thread_id needed)
+      const apiSuggestions = responseData.suggestions || [];
+      console.log('All API suggestions:', apiSuggestions);
+
+      if (apiSuggestions.length > 0) {
+        const uiSuggestions = mapAPIToUISuggestions(apiSuggestions);
+        console.log('Mapped UI suggestions:', uiSuggestions);
+        setSuggestions(uiSuggestions);
+        setHasSuggestionsGenerated(true);
+      }
+      setShouldFetchSuggestions(false); // Reset the fetch trigger after processing
+    }
+  }, [suggestionsResponse, conversation.id])
+
+  // Handle API errors - reset fetch trigger so user can retry
+  useEffect(() => {
+    if (suggestionsError) {
+      setShouldFetchSuggestions(false)
+    }
+  }, [suggestionsError])
+
+  const generateSuggestions = () => {
+    setShouldFetchSuggestions(true)
   }
 
   const generateCustomSuggestions = async (userInput: string) => {
@@ -387,61 +429,131 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
         >
           {/* Messages */}
           <div style={{ marginBottom: 'var(--space-xl)' }}>
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                style={{
-                  marginBottom: 'var(--space-lg)',
-                  maxWidth: 'clamp(250px, 80%, 400px)',
-                  marginLeft: message.isUser ? 'auto' : '0',
-                  marginRight: message.isUser ? '0' : 'auto',
-                  backgroundColor: message.isUser ? '#ed1c24' : '#f5f5f5',
-                  color: message.isUser ? '#ffffff' : '#1c1c1c',
-                  borderRadius: '0.5rem',
-                  padding: 'var(--card-padding)'
-                }}
-              >
-                <p style={{
-                  fontSize: 'var(--text-sm)',
-                  lineHeight: '1.6',
-                  margin: 0,
-                  marginBottom: 'var(--space-xs)'
-                }}>
-                  {message.text}
-                </p>
-                <span style={{
-                  fontSize: 'var(--text-xs)',
-                  opacity: 0.7,
-                  display: 'block'
-                }}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+            {messagesLoading ? (
+              <div style={{
+                textAlign: 'center',
+                padding: 'var(--space-2xl)',
+                color: '#6b7280'
+              }}>
+                <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Loading messages...</p>
               </div>
-            ))}
+            ) : messagesError ? (
+              <div style={{
+                textAlign: 'center',
+                padding: 'var(--space-2xl)',
+                color: '#dc2626'
+              }}>
+                <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Error loading messages: {messagesError.message}</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: 'var(--space-2xl)',
+                color: '#6b7280'
+              }}>
+                <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>No messages in this conversation yet.</p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  style={{
+                    marginBottom: 'var(--space-lg)',
+                    maxWidth: 'clamp(250px, 80%, 400px)',
+                    marginLeft: message.isUser ? 'auto' : '0',
+                    marginRight: message.isUser ? '0' : 'auto',
+                    backgroundColor: message.isUser ? '#ed1c24' : '#f5f5f5',
+                    color: message.isUser ? '#ffffff' : '#1c1c1c',
+                    borderRadius: '0.5rem',
+                    padding: 'var(--card-padding)'
+                  }}
+                >
+                  <p style={{
+                    fontSize: 'var(--text-sm)',
+                    lineHeight: '1.6',
+                    margin: 0,
+                    marginBottom: 'var(--space-xs)'
+                  }}>
+                    {message.text}
+                  </p>
+                  <span style={{
+                    fontSize: 'var(--text-xs)',
+                    opacity: 0.7,
+                    display: 'block'
+                  }}>
+                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              ))
+            )}
           </div>
 
           {/* Generate suggestions button */}
-          {!hasSuggestionsGenerated && (
+          {!hasSuggestionsGenerated && !messagesLoading && messages.length > 0 && (
             <div style={{ textAlign: 'center', margin: 'var(--space-2xl) 0' }}>
               <button
                 onClick={generateSuggestions}
+                disabled={suggestionsLoading}
                 style={{
-                  backgroundColor: '#ed1c24',
+                  backgroundColor: suggestionsLoading ? '#9ca3af' : '#ed1c24',
                   color: '#ffffff',
                   border: 'none',
                   borderRadius: '0.375rem',
                   padding: 'var(--space-md) var(--space-xl)',
                   fontSize: 'var(--text-sm)',
                   fontWeight: '500',
-                  cursor: 'pointer',
+                  cursor: suggestionsLoading ? 'not-allowed' : 'pointer',
                   transition: 'background-color 0.2s',
                   minHeight: 'var(--button-height)'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#d91920'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ed1c24'}
+                onMouseEnter={(e) => {
+                  if (!suggestionsLoading) {
+                    e.currentTarget.style.backgroundColor = '#d91920'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!suggestionsLoading) {
+                    e.currentTarget.style.backgroundColor = '#ed1c24'
+                  }
+                }}
               >
-                Generate Initial Suggestions
+                {suggestionsLoading ? 'Generating Suggestions...' : 'Generate Initial Suggestions'}
               </button>
+
+              {/* Error message */}
+              {suggestionsError && (
+                <div style={{
+                  marginTop: 'var(--space-md)',
+                  padding: 'var(--space-md)',
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  borderRadius: '0.375rem',
+                  fontSize: 'var(--text-sm)',
+                  border: '1px solid #fecaca'
+                }}>
+                  <p style={{ margin: 0, marginBottom: 'var(--space-xs)' }}>
+                    Failed to generate suggestions: {suggestionsError.message}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShouldFetchSuggestions(false)
+                      setTimeout(() => generateSuggestions(), 100)
+                    }}
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: '#dc2626',
+                      border: '1px solid #dc2626',
+                      borderRadius: '0.25rem',
+                      padding: 'var(--space-xs) var(--space-sm)',
+                      fontSize: 'var(--text-xs)',
+                      cursor: 'pointer',
+                      fontWeight: '500'
+                    }}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
