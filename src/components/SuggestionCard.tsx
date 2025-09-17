@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Copy, Check } from 'lucide-react'
 
 export type ResponseType = 'discovery' | 'qualify' | 'offer'
@@ -12,6 +12,8 @@ interface SuggestionCardProps {
 export default function SuggestionCard({ suggestion, responseType, rationale }: SuggestionCardProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top')
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const getResponseTypeColor = (type: ResponseType) => {
     switch (type) {
@@ -39,6 +41,26 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
     }
   }
 
+  const determineTooltipPosition = () => {
+    if (!buttonRef.current) return
+
+    const buttonRect = buttonRef.current.getBoundingClientRect()
+    const viewportHeight = window.innerHeight
+
+    // If button is in the top third of the viewport, show tooltip below
+    // Otherwise show it above
+    if (buttonRect.top < viewportHeight / 3) {
+      setTooltipPosition('bottom')
+    } else {
+      setTooltipPosition('top')
+    }
+  }
+
+  const handleMouseEnter = () => {
+    determineTooltipPosition()
+    setShowTooltip(true)
+  }
+
   return (
     <div
       className="bg-gray-100 border border-gray-200 rounded-lg transition-colors hover:border-red-600"
@@ -49,7 +71,8 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
           {/* Response Type Button with Tooltip */}
           <div style={{ position: 'relative' }}>
             <button
-              onMouseEnter={() => setShowTooltip(true)}
+              ref={buttonRef}
+              onMouseEnter={handleMouseEnter}
               onMouseLeave={() => setShowTooltip(false)}
               style={{
                 backgroundColor: getResponseTypeColor(responseType).bg,
@@ -71,9 +94,14 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
               <div
                 style={{
                   position: 'absolute',
-                  bottom: '100%',
+                  ...(tooltipPosition === 'top' ? {
+                    bottom: '100%',
+                    marginBottom: 'var(--space-sm)',
+                  } : {
+                    top: '100%',
+                    marginTop: 'var(--space-sm)',
+                  }),
                   left: '0',
-                  marginBottom: 'var(--space-sm)',
                   backgroundColor: '#1c1c1c',
                   color: '#ffffff',
                   padding: 'var(--space-sm) var(--space-md)',
@@ -90,16 +118,24 @@ export default function SuggestionCard({ suggestion, responseType, rationale }: 
                 }}
               >
                 {rationale}
+                {/* Arrow pointing to the button */}
                 <div
                   style={{
                     position: 'absolute',
-                    top: '100%',
+                    ...(tooltipPosition === 'top' ? {
+                      top: '100%',
+                      borderLeft: '6px solid transparent',
+                      borderRight: '6px solid transparent',
+                      borderTop: '6px solid #1c1c1c'
+                    } : {
+                      bottom: '100%',
+                      borderLeft: '6px solid transparent',
+                      borderRight: '6px solid transparent',
+                      borderBottom: '6px solid #1c1c1c'
+                    }),
                     left: 'var(--space-lg)',
                     width: '0',
-                    height: '0',
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderTop: '6px solid #1c1c1c'
+                    height: '0'
                   }}
                 />
               </div>

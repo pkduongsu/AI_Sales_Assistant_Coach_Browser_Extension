@@ -462,7 +462,7 @@ export default function ConversationView({ conversation, onGoBack, onUpdateStatu
                     maxWidth: 'clamp(250px, 80%, 400px)',
                     marginLeft: message.isUser ? 'auto' : '0',
                     marginRight: message.isUser ? '0' : 'auto',
-                    backgroundColor: message.isUser ? '#ed1c24' : '#f5f5f5',
+                    backgroundColor: message.isUser ? '#0A7CFF' : '#f5f5f5',
                     color: message.isUser ? '#ffffff' : '#1c1c1c',
                     borderRadius: '0.5rem',
                     padding: 'var(--card-padding)'
